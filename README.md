@@ -1,932 +1,263 @@
-::: {align="center"}
-# 🚀 Spring Boot + Ollama AI
+<div align="center">
 
-### Build AI-powered applications with a local LLM using Spring Boot, Ollama & Qwen3.8
+# 🦙 Spring Boot + Ollama + Qwen3.8
 
-```{=html}
-<p>
+### A minimal, production-shaped REST API that talks to a locally-running LLM via Spring AI
+
+![Java](https://img.shields.io/badge/Java-17+-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white)
+![Spring Boot](https://img.shields.io/badge/Spring_Boot-4.1.0-6DB33F?style=for-the-badge&logo=springboot&logoColor=white)
+![Spring AI](https://img.shields.io/badge/Spring_AI-2.0.0-1E88E5?style=for-the-badge)
+![Ollama](https://img.shields.io/badge/Ollama-Local_LLM-000000?style=for-the-badge&logo=ollama&logoColor=white)
+![Qwen3.8](https://img.shields.io/badge/Qwen3.8-27B-7C3AED?style=for-the-badge)
+
+**No cloud API key. No per-token billing. Just Spring Boot talking to a model running on your own machine.**
+
+[Overview](#-overview) • [Endpoints](#-api-endpoints) • [Setup](#️-setup) • [Testing](#-testing) • [Project Structure](#-project-structure) • [Roadmap](#-roadmap)
+
+</div>
+
+---
+
+## 🎯 Overview
+
+This project wires a Spring Boot application to a local [Ollama](https://ollama.com) server running **Qwen3.8** (27B, vision + tools + thinking) using the official **Spring AI Ollama starter** — no custom HTTP client, no manual JSON plumbing.
+
 ```
-`<img src="https://img.shields.io/badge/Java-17+-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white" alt="Java">`{=html}
-`<img src="https://img.shields.io/badge/Spring_Boot-3.x-6DB33F?style=for-the-badge&logo=springboot&logoColor=white" alt="Spring Boot">`{=html}
-`<img src="https://img.shields.io/badge/Ollama-Local_LLM-black?style=for-the-badge&logo=ollama&logoColor=white" alt="Ollama">`{=html}
-`<img src="https://img.shields.io/badge/Qwen3.8-LLM-7C3AED?style=for-the-badge" alt="Qwen3.8">`{=html}
-```{=html}
-</p>
-```
-```{=html}
-<p>
-```
-`<img src="https://img.shields.io/badge/API-REST-0EA5E9?style=flat-square" alt="REST API">`{=html}
-`<img src="https://img.shields.io/badge/AI-Local_Inference-22C55E?style=flat-square" alt="Local AI">`{=html}
-`<img src="https://img.shields.io/badge/License-MIT-yellow?style=flat-square" alt="License">`{=html}
-```{=html}
-</p>
-```
-**A developer-friendly reference project for connecting a Spring Boot
-backend to a locally running Ollama LLM.**
-
-[✨ Features](#-features) • [🏗️ Architecture](#️-architecture) • [⚙️
-Setup](#️-setup) • [🔌 API](#-api) • [🧪 Testing](#-testing) • [📁
-Structure](#-project-structure) • [🚀 Run](#-run-the-project) • [🛠️
-Troubleshooting](#️-troubleshooting)
-:::
-
-------------------------------------------------------------------------
-
-## 📌 Table of Contents
-
--   [🎯 About](#-about)
--   [✨ Features](#-features)
--   [🧰 Tech Stack](#-tech-stack)
--   [🏗️ Architecture](#️-architecture)
--   [🔄 Request Flow](#-request-flow)
--   [📋 Prerequisites](#-prerequisites)
--   [⚙️ Setup](#️-setup)
-    -   [1. Clone](#1-clone-the-repository)
-    -   [2. Start Ollama](#2-start-ollama)
-    -   [3. Pull the model](#3-pull-the-model)
-    -   [4. Configure Spring Boot](#4-configure-spring-boot)
-    -   [5. Run Spring Boot](#5-run-spring-boot)
--   [🔌 API](#-api)
--   [🧪 Testing](#-testing)
--   [📁 Project Structure](#-project-structure)
--   [🛠️ Configuration](#️-configuration)
--   [🧯 Troubleshooting](#-troubleshooting)
--   [🔐 Security Notes](#-security-notes)
--   [📈 Future Improvements](#-future-improvements)
--   [🤝 Contributing](#-contributing)
--   [📄 License](#-license)
--   [👨‍💻 Author](#-author)
-
-------------------------------------------------------------------------
-
-## 🎯 About
-
-**Spring Boot + Ollama AI** demonstrates how to integrate a locally
-hosted Large Language Model (LLM) with a Spring Boot application.
-
-Instead of sending prompts to a cloud AI provider, the application
-communicates with an Ollama server running on your own machine:
-
-``` text
-Client
-  │
-  │ HTTP Request
-  ▼
-Spring Boot REST API
-  │
-  │ Prompt
-  ▼
-Ollama
-  │
-  │ Local inference
-  ▼
+Client (browser / Postman / curl)
+        │  HTTP GET
+        ▼
+Spring Boot — ChatController
+        │  OllamaChatModel.call() / .stream()
+        ▼
+Ollama server (localhost:11434)
+        │  local inference
+        ▼
 Qwen3.8
-  │
-  │ Generated response
-  ▼
-Spring Boot
-  │
-  ▼
-Client
+        │  generated text
+        ▼
+Spring Boot ──▶ JSON / SSE stream ──▶ Client
 ```
 
-This makes the project useful for learning:
+Spring AI's `OllamaChatModel` is injected straight into the controller, so the integration is a handful of lines — a clean base to extend into a chatbot, coding assistant, or RAG app.
 
--   Local LLM integration
--   REST API development
--   Spring Boot AI application architecture
--   Prompt/response handling
--   Local AI development without a cloud API key
--   Building a foundation for RAG, chat history, tools, and AI agents
-
-> \[!IMPORTANT\] The LLM runs locally through Ollama. Your application
-> still needs enough system memory/compute to load the selected model.
-
-------------------------------------------------------------------------
+---
 
 ## ✨ Features
 
-```{=html}
-<table>
-```
-```{=html}
-<tr>
-```
-```{=html}
-<td width="50%">
-```
-### 🤖 AI
+- 🔌 **Spring AI ↔ Ollama integration** via `spring-ai-starter-model-ollama` — no manual REST calls to the Ollama API
+- 💬 **Synchronous generation** — `GET /ai/generate`, returns a plain JSON response
+- 📡 **Streaming generation** — `GET /ai/generateStream`, returns a reactive `Flux<ChatResponse>` (token-by-token)
+- 🧠 **Runs entirely locally** — Qwen3.8 runs on your machine through Ollama, no cloud key required
+- 🧱 **Minimal footprint** — one controller, one application class, config-driven model selection
 
--   🧠 Local LLM inference
--   💬 Natural-language prompts
--   🔌 Ollama integration
--   🧩 Model-based response generation
--   🔒 No mandatory cloud AI API key
-
-```{=html}
-</td>
-```
-```{=html}
-<td width="50%">
-```
-### ☕ Backend
-
--   🚀 Spring Boot REST API
--   📡 HTTP communication
--   🧱 Clean backend structure
--   ⚙️ Externalized configuration
--   🧪 Easy API testing with Postman/cURL
-
-```{=html}
-</td>
-```
-```{=html}
-</tr>
-```
-```{=html}
-</table>
-```
-### 🔮 Designed for extension
-
-The project can later be extended with:
-
--   Streaming responses
--   Conversation history
--   Prompt templates
--   RAG
--   Vector databases
--   Embeddings
--   Function/tool calling
--   Authentication & authorization
--   WebSocket/SSE
--   AI agents
--   React frontend
-
-------------------------------------------------------------------------
+---
 
 ## 🧰 Tech Stack
 
-  Technology              Purpose
-  ----------------------- ------------------------------------
-  ☕ **Java 17+**         Backend language
-  🌱 **Spring Boot**      Backend framework
-  🦙 **Ollama**           Local LLM runtime
-  🧠 **Qwen3.8**          Local language model
-  🌐 **REST API**         Client ↔ Spring Boot communication
-  🧪 **Postman / cURL**   API testing
-  🛠️ **Maven**            Dependency & build management
-  💻 **Git + GitHub**     Version control
+| Layer | Technology |
+|---|---|
+| Language | Java 17 |
+| Framework | Spring Boot 4.1.0 |
+| AI integration | Spring AI 2.0.0 (`spring-ai-starter-model-ollama`) |
+| LLM runtime | Ollama |
+| Model | Qwen3.8 (27B · vision · tools · thinking) |
+| Reactive streaming | Project Reactor (`Flux`) |
+| Build tool | Maven |
 
-------------------------------------------------------------------------
+---
 
-## 🏗️ Architecture
+## 🔌 API Endpoints
 
-``` mermaid
-flowchart LR
-    A[Client / Postman / Frontend] -->|HTTP POST| B[Spring Boot REST API]
-    B --> C[AI Service]
-    C -->|HTTP API| D[Ollama]
-    D --> E[Qwen3.8]
-    E --> D
-    D --> C
-    C --> B
-    B --> A
+### 1. Generate (blocking)
+
+```
+GET /ai/generate?message=Tell me a joke
 ```
 
-### Components
+**Response**
 
-#### 1. Client
-
-Sends a prompt to the Spring Boot API.
-
-#### 2. Spring Boot
-
-Receives the request, validates it, and delegates AI processing to the
-service layer.
-
-#### 3. AI Service
-
-Builds the request sent to Ollama and handles the generated response.
-
-#### 4. Ollama
-
-Runs the selected LLM locally and exposes an HTTP API.
-
-#### 5. Qwen3.8
-
-Processes the prompt and generates the response.
-
-------------------------------------------------------------------------
-
-## 🔄 Request Flow
-
-``` text
-1. User enters a prompt
-          ↓
-2. Client sends POST request
-          ↓
-3. Spring Boot Controller receives request
-          ↓
-4. Service prepares the prompt
-          ↓
-5. Spring Boot calls Ollama
-          ↓
-6. Ollama loads/uses Qwen3.8
-          ↓
-7. Qwen3.8 generates response
-          ↓
-8. Ollama returns response
-          ↓
-9. Spring Boot returns JSON
-          ↓
-10. Client displays response
+```json
+{
+  "generation": "Why did the developer go broke? Because he used up all his cache."
+}
 ```
 
-------------------------------------------------------------------------
+`message` defaults to `"Tell me a joke"` if omitted.
 
-# 📋 Prerequisites
+### 2. Generate (streaming)
 
-Before running the project, install:
-
-### ☕ Java
-
-Java 17 or later.
-
-Verify:
-
-``` bash
-java -version
+```
+GET /ai/generateStream?message=Explain dependency injection
 ```
 
-Expected:
+Returns a `Flux<ChatResponse>` — the response streams to the client as Server-Sent Events, chunk by chunk, instead of waiting for the full completion.
 
-``` text
-java version "17.x.x"
+### Example requests
+
+```bash
+# Blocking
+curl "http://localhost:8080/ai/generate?message=What is Spring Boot?"
+
+# Streaming
+curl "http://localhost:8080/ai/generateStream?message=Explain REST APIs in 3 lines"
 ```
 
-### 📦 Maven
+> Both endpoints are `GET` with a query parameter, not `POST` with a JSON body — that's an intentional, quick-to-demo design (great for pasting a link straight into a browser to test).
 
-Verify:
+---
 
-``` bash
-mvn -version
-```
+## 📋 Prerequisites
 
-### 🦙 Ollama
+| Tool | Check |
+|---|---|
+| Java 17+ | `java -version` |
+| Maven | `mvn -version` (or use the bundled `./mvnw`) |
+| Ollama | `ollama --version` |
+| Qwen3.8 pulled | `ollama list` |
 
-Install Ollama for your operating system and verify:
+---
 
-``` bash
-ollama --version
-```
+## ⚙️ Setup
 
-### 🧠 Qwen3.8
+### 1. Clone the repository
 
-Make sure the model is available:
-
-``` bash
-ollama list
-```
-
-You should see something similar to:
-
-``` text
-qwen3.8:latest
-```
-
-------------------------------------------------------------------------
-
-# ⚙️ Setup
-
-## 1. Clone the repository
-
-``` bash
-git clone https://github.com/YOUR_USERNAME/springboot-ollama-ai.git
+```bash
+git clone https://github.com/Badalsingh25/springboot-ollama-ai.git
 cd springboot-ollama-ai
 ```
 
-> Replace `YOUR_USERNAME` with your GitHub username.
+### 2. Start Ollama and pull Qwen3.8
 
-------------------------------------------------------------------------
-
-## 2. Start Ollama
-
-Start the Ollama application.
-
-You can also verify that the Ollama server is reachable:
-
-``` bash
-ollama list
-```
-
-The default Ollama API is:
-
-``` text
-http://localhost:11434
-```
-
-------------------------------------------------------------------------
-
-## 3. Pull the model
-
-If Qwen3.8 is not already installed:
-
-``` bash
+```bash
+ollama serve          # starts the Ollama server (default: http://localhost:11434)
 ollama pull qwen3.8
+ollama run qwen3.8    # sanity check — try "Hello" and confirm it responds
 ```
 
-Check:
+### 3. Configure the model
 
-``` bash
-ollama list
+Set the model name in `src/main/resources/application.properties`:
+
+```properties
+spring.application.name=deepseek
+
+spring.ai.ollama.chat.model=qwen3.8
 ```
 
-Test it directly:
+> ⚠️ In this repo the property currently ships **blank**. Spring AI won't know which model to call until you set it — fill in `qwen3.8` (or override it, see below) before running the app.
 
-``` bash
-ollama run qwen3.8
+Spring AI defaults to `http://localhost:11434` for the Ollama base URL, so no extra config is needed if Ollama is running locally on its default port. To point at a different host, add:
+
+```properties
+spring.ai.ollama.base-url=http://localhost:11434
 ```
 
-Try:
+### 4. Run the application
 
-``` text
-Hello
+```bash
+./mvnw spring-boot:run
 ```
 
-If the model responds, Ollama is ready.
+or build and run the jar directly:
 
-------------------------------------------------------------------------
-
-## 4. Configure Spring Boot
-
-Configure the Ollama connection in:
-
-``` text
-src/main/resources/application.properties
+```bash
+./mvnw clean package
+java -jar target/deepseek-0.0.1-SNAPSHOT.jar
 ```
 
-Example:
+The API is now live at `http://localhost:8080`.
 
-``` properties
-spring.application.name=springboot-ollama-ai
+---
 
-server.port=8080
+## 🧪 Testing
 
-ollama.base-url=http://localhost:11434
-ollama.model=qwen3.8
+Once the app is running:
+
+```bash
+curl "http://localhost:8080/ai/generate?message=Hello"
 ```
 
-> If your implementation uses Spring AI's configuration properties
-> instead, keep the property names required by your actual Spring AI
-> version. Do not copy both configuration styles into the same
-> application unless your code is designed for them.
+Or open in a browser:
 
-------------------------------------------------------------------------
-
-## 5. Run Spring Boot
-
-Using Maven:
-
-``` bash
-mvn spring-boot:run
+```
+http://localhost:8080/ai/generate?message=Write a haiku about Java
 ```
 
-Or build first:
+For the streaming endpoint, use a tool that renders SSE (Postman, or `curl -N`):
 
-``` bash
-mvn clean package
+```bash
+curl -N "http://localhost:8080/ai/generateStream?message=Count to 5 slowly"
 ```
 
-Then:
+### Suggested test prompts
 
-``` bash
-java -jar target/*.jar
+| Category | Prompt |
+|---|---|
+| Basic | `Hello, how are you?` |
+| Coding | `Write a Java binary search implementation.` |
+| Reasoning | `Explain why REST APIs are stateless.` |
+| SQL | `Write a MySQL query to find duplicate emails.` |
+| Summarization | `Summarize the concept of dependency injection in 2 lines.` |
+
+---
+
+## 📁 Project Structure
+
 ```
-
-The backend should be available at:
-
-``` text
-http://localhost:8080
-```
-
-------------------------------------------------------------------------
-
-# 🔌 API
-
-The exact endpoint depends on your controller implementation.
-
-A typical endpoint can look like:
-
-``` http
-POST /api/ai/chat
-```
-
-### Request
-
-``` json
-{
-  "prompt": "Explain Spring Boot in simple words"
-}
-```
-
-### Response
-
-``` json
-{
-  "response": "Spring Boot is a Java framework..."
-}
-```
-
-------------------------------------------------------------------------
-
-## Example cURL Request
-
-``` bash
-curl -X POST http://localhost:8080/api/ai/chat \
-  -H "Content-Type: application/json" \
-  -d "{\"prompt\":\"Explain REST API in 3 lines\"}"
-```
-
-> Update `/api/ai/chat` and the JSON fields if your actual controller
-> uses different names.
-
-------------------------------------------------------------------------
-
-# 🧪 Testing
-
-## Test Ollama independently
-
-Before debugging Spring Boot, make sure Ollama itself works:
-
-``` bash
-ollama run qwen3.8
-```
-
-If this works, test the backend.
-
-## Test the Spring Boot API
-
-Using Postman:
-
-``` text
-POST http://localhost:8080/api/ai/chat
-```
-
-Headers:
-
-``` text
-Content-Type: application/json
-```
-
-Body → raw → JSON:
-
-``` json
-{
-  "prompt": "What is dependency injection in Spring?"
-}
-```
-
-------------------------------------------------------------------------
-
-## 🧪 Suggested Test Prompts
-
-  Test            Prompt
-  --------------- -------------------------------------------------
-  Basic           `Hello, how are you?`
-  Java            `Explain Java interfaces.`
-  Spring Boot     `What is dependency injection?`
-  SQL             `Write a MySQL query to find duplicate emails.`
-  Coding          `Write a Java binary search implementation.`
-  Reasoning       `Explain why REST APIs are stateless.`
-  Summarization   `Summarize the following text: ...`
-
-------------------------------------------------------------------------
-
-# 📁 Project Structure
-
-A recommended structure:
-
-``` text
-springboot-ollama-ai/
-│
+deepseek/
 ├── src/
 │   ├── main/
-│   │   ├── java/
-│   │   │   └── com/example/ollama/
-│   │   │       ├── controller/
-│   │   │       │   └── AiController.java
-│   │   │       │
-│   │   │       ├── service/
-│   │   │       │   └── AiService.java
-│   │   │       │
-│   │   │       ├── dto/
-│   │   │       │   ├── ChatRequest.java
-│   │   │       │   └── ChatResponse.java
-│   │   │       │
-│   │   │       └── OllamaApplication.java
-│   │   │
+│   │   ├── java/com/spring/deepseek/
+│   │   │   ├── ChatController.java        # /ai/generate + /ai/generateStream
+│   │   │   └── DeepseekApplication.java   # Spring Boot entry point
 │   │   └── resources/
-│   │       └── application.properties
-│   │
+│   │       ├── application.properties     # Ollama model config
+│   │       ├── static/
+│   │       └── templates/
 │   └── test/
-│
-├── .gitignore
+│       └── java/com/spring/deepseek/
+│           └── DeepseekApplicationTests.java
 ├── pom.xml
 └── README.md
 ```
+---
 
-> Adjust the package and filenames to match your actual project.
+## 🔐 Security Notes
 
-------------------------------------------------------------------------
+This project is built for **local development**. Before exposing it beyond `localhost`:
 
-# 🛠️ Configuration
+- Add authentication/authorization on the endpoints
+- Rate-limit requests (a local LLM is expensive per call)
+- Validate/sanitize the `message` input
+- Put it behind HTTPS if deployed
+- Configure CORS explicitly instead of leaving it open
 
-A clean configuration strategy is to keep model and server settings
-outside your Java code.
+---
 
-Example:
+## 🚀 Roadmap
 
-``` properties
-ollama.base-url=${OLLAMA_BASE_URL:http://localhost:11434}
-ollama.model=${OLLAMA_MODEL:qwen3.8}
-```
+- [x] Ollama + Spring AI integration
+- [x] Blocking generation endpoint
+- [x] Streaming generation endpoint
+- [ ] Conversation memory / chat history
+- [ ] Prompt templates
+- [ ] Switch endpoints to `POST` with a request body / DTOs
+- [ ] Simple React or Thymeleaf chat UI
+- [ ] RAG (document upload → embeddings → vector store → grounded answers)
+- [ ] Dockerfile + docker-compose (app + Ollama)
+- [ ] Basic auth / rate limiting for non-local deployment
 
-This allows you to change the model without modifying Java source code.
 
-### Example
+---
 
-Default:
+## 📄 License
 
-``` text
-OLLAMA_MODEL=qwen3.8
-```
+Licensed for learning and personal development use — see [`LICENSE`](./LICENSE) for details. Check Qwen3.8's own model license via Ollama before any commercial or redistribution use.
 
-Another local model:
+---
 
-``` text
-OLLAMA_MODEL=another-model
-```
+<div align="center">
 
-------------------------------------------------------------------------
+Made with ☕ Java, 🌱 Spring Boot, and a locally-running 🧠 Qwen3.8
 
-# 🧯 Troubleshooting
-
-```{=html}
-<details>
-```
-```{=html}
-<summary>
-```
-`<strong>`{=html}❌ Ollama connection refused`</strong>`{=html}
-```{=html}
-</summary>
-```
-Make sure Ollama is running.
-
-Check:
-
-``` bash
-ollama list
-```
-
-Also verify the server URL:
-
-``` text
-http://localhost:11434
-```
-
-```{=html}
-</details>
-```
-```{=html}
-<details>
-```
-```{=html}
-<summary>
-```
-`<strong>`{=html}❌ Model not found`</strong>`{=html}
-```{=html}
-</summary>
-```
-Check installed models:
-
-``` bash
-ollama list
-```
-
-If necessary:
-
-``` bash
-ollama pull qwen3.8
-```
-
-Make sure the model name in Spring Boot exactly matches the installed
-model.
-
-```{=html}
-</details>
-```
-```{=html}
-<details>
-```
-```{=html}
-<summary>
-```
-`<strong>`{=html}❌ Out of memory`</strong>`{=html}
-```{=html}
-</summary>
-```
-A local LLM needs enough system memory/VRAM to load and run.
-
-Check your available memory and use a smaller model if necessary.
-
-For example:
-
-``` bash
-ollama pull qwen3:8b
-```
-
-Then configure:
-
-``` properties
-ollama.model=qwen3:8b
-```
-
-```{=html}
-</details>
-```
-```{=html}
-<details>
-```
-```{=html}
-<summary>
-```
-`<strong>`{=html}❌ Port 8080 already in use`</strong>`{=html}
-```{=html}
-</summary>
-```
-Change:
-
-``` properties
-server.port=8080
-```
-
-to another available port:
-
-``` properties
-server.port=8081
-```
-
-```{=html}
-</details>
-```
-```{=html}
-<details>
-```
-```{=html}
-<summary>
-```
-`<strong>`{=html}❌ Spring Boot cannot connect to
-Ollama`</strong>`{=html}
-```{=html}
-</summary>
-```
-Check these three things:
-
-1.  Ollama is running.
-2.  The base URL is correct.
-3.  The configured model exists in `ollama list`.
-
-```{=html}
-</details>
-```
-
-------------------------------------------------------------------------
-
-# 🔐 Security Notes
-
-This project is designed primarily for **local development**.
-
-If you expose the Spring Boot API publicly, add appropriate security
-controls:
-
--   🔐 Authentication
--   🛡️ Authorization
--   🚦 Rate limiting
--   🧹 Input validation
--   📝 Request logging
--   🔒 HTTPS
--   🌐 CORS configuration
--   🚫 Prompt abuse protection
-
-Do not expose an unauthenticated local LLM endpoint directly to the
-public internet.
-
-------------------------------------------------------------------------
-
-# 💡 Why Ollama?
-
-Ollama makes it possible to run supported LLMs locally and communicate
-with them through an API.
-
-### Advantages
-
--   🏠 Local inference
--   💰 No per-request cloud API cost
--   🔐 Better control over local data
--   🧪 Easy experimentation
--   🔌 Simple API integration
--   🧑‍💻 Developer-friendly workflow
-
-### Local vs Cloud
-
-``` text
-                AI Application
-                     │
-          ┌──────────┴──────────┐
-          │                     │
-       Cloud AI              Local AI
-          │                     │
-      Internet                Ollama
-          │                     │
-      API Provider          Qwen3.8
-```
-
-------------------------------------------------------------------------
-
-# 🚀 Future Improvements
-
-The current project can become a much more complete AI platform.
-
-### Phase 1 --- Core
-
--   [x] Ollama integration
--   [x] Local LLM
--   [x] Spring Boot REST API
--   [x] Prompt → response flow
-
-### Phase 2 --- Better UX
-
--   [ ] Streaming responses
--   [ ] Chat history
--   [ ] Conversation sessions
--   [ ] Prompt templates
--   [ ] React frontend
-
-### Phase 3 --- RAG
-
--   [ ] Document upload
--   [ ] Text extraction
--   [ ] Chunking
--   [ ] Embeddings
--   [ ] Vector database
--   [ ] Retrieval
--   [ ] Context-aware answers
-
-### Phase 4 --- Advanced AI
-
--   [ ] Tool/function calling
--   [ ] AI agents
--   [ ] Structured output
--   [ ] Model selection
--   [ ] Conversation memory
--   [ ] Evaluation pipeline
-
-### Phase 5 --- Production
-
--   [ ] JWT authentication
--   [ ] Role-based access
--   [ ] Rate limiting
--   [ ] Docker
--   [ ] CI/CD
--   [ ] Monitoring
--   [ ] Centralized logging
-
-------------------------------------------------------------------------
-
-# 🧠 Example Use Cases
-
-This integration can be used as the foundation for:
-
-``` text
-🤖 AI Chatbot
-      │
-      ├── 💬 General Chat
-      ├── 👨‍💻 Coding Assistant
-      ├── 📚 Study Assistant
-      ├── 📄 Document Q&A
-      ├── 🔎 RAG Application
-      ├── ✉️ Email Assistant
-      ├── 🧾 Resume Analyzer
-      └── 🏢 Enterprise AI Assistant
-```
-
-------------------------------------------------------------------------
-
-# 📊 High-Level Comparison
-
-  Feature                             Local Ollama         Cloud LLM API
-  --------------------------------- -------------- ---------------------
-  Runs locally                                  ✅                    ❌
-  Requires internet for inference               ❌            Usually ✅
-  Per-request API cost                          ❌            Usually ✅
-  Data stays on local machine                 ✅\*   Depends on provider
-  Easy local development                ⭐⭐⭐⭐⭐              ⭐⭐⭐⭐
-  Hardware requirement                      Higher         Lower locally
-
-\* Your application, OS, network, logging, and other components can
-still transmit data if configured to do so.
-
-------------------------------------------------------------------------
-
-# 🌟 Project Highlights
-
-If you're using this project in your portfolio, you can describe it as:
-
-> **Developed a Spring Boot REST API integrated with Ollama to run a
-> local Qwen3.8 LLM, enabling AI-powered responses without relying on a
-> cloud inference API. Designed the integration with configurable
-> model/server properties and a service-oriented backend architecture.**
-
-### Resume-friendly skills
-
-``` text
-Java • Spring Boot • REST API • Ollama • Local LLM
-Qwen3.8 • Maven • JSON • AI Integration
-```
-
-------------------------------------------------------------------------
-
-# 🤝 Contributing
-
-Contributions are welcome!
-
-### 1. Fork
-
-``` text
-Fork → Clone → Create Branch
-```
-
-### 2. Create a branch
-
-``` bash
-git checkout -b feature/your-feature
-```
-
-### 3. Commit
-
-``` bash
-git add .
-git commit -m "feat: add your feature"
-```
-
-### 4. Push
-
-``` bash
-git push origin feature/your-feature
-```
-
-### 5. Open a Pull Request
-
-Explain:
-
--   What changed
--   Why it changed
--   How to test it
-
-------------------------------------------------------------------------
-
-# 📄 License
-
-This project is intended for learning and development.
-
-If this repository is released under MIT, add the standard MIT license
-text in a `LICENSE` file.
-
-``` text
-MIT License
-```
-
-> Check the individual licenses of Ollama models you redistribute or
-> deploy. A model being locally runnable through Ollama does not
-> automatically mean every model has identical licensing terms.
-
-------------------------------------------------------------------------
-
-# ⭐ Star This Repository
-
-If this project helps you understand **Spring Boot + Local LLM
-integration**, consider giving the repository a ⭐.
-
-------------------------------------------------------------------------
-
-::: {align="center"}
-### 🦙 Build Local. Build Smart. Build with AI.
-
-**Spring Boot × Ollama × Qwen3.8**
-
-`<br>`{=html}
-
-Made with ☕ Java & 🤖 AI
-:::
+</div>
